@@ -20,18 +20,18 @@ function avoidance()
                 colisionTime = now
             end
 
-            if now - colisionTime >= 1000 then
+            if now - colisionTime >= 500 then
                 gcs:send_text(6, "Obstacle detected")
                 gcs:send_text(6, "Obstacle Distance: " .. tostring(distance))
                 if droneMode ~= 6 then
                     vehicle:set_mode(6) -- change to RTL
                 end
-            else
-                colisionTime = nil
             end
         elseif distance <= threshold + threshold / 2 and distance > threshold then
             gcs:send_text(6, "Obstacle close")
             gcs:send_text(6, "Obstacle Distance: " .. tostring(distance))
+        else
+            colisionTime = nil
         end
     else
         gcs:send_text(6, "no lidar data")
