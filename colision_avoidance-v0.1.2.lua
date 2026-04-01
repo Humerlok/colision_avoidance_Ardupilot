@@ -78,5 +78,10 @@ end
 
 gcs:send_text(6, "Collision Avoidance is running v0.1.2")
 return update()
+--Nossa Senhora das 6 hélices, protetora dos drones,
+--que atravessam o cerrado as 6 horas da tarde,
+--Fazei com que eu chegue do outro lado,
+--sem crashes com árvores.
+--Amém.
 
 --code by Renan Mandelo Oliveira
