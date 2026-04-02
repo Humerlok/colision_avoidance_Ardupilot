@@ -9,6 +9,7 @@ local armingState         -- drone armado
 local movingState = false --se o drone se move
 local brakeMode = false   --se o drone está em brake
 local rtlMode = false
+local debugMode = false
 
 --variáveis de tempo
 local colisionTime = nil
@@ -34,12 +35,12 @@ function avoidance()
         end
         --timer para filtrar leituras falsas
         if now - colisionTime >= 250 then
-            --verifica se o drone não está em modo break
+            --verifica se o drone não está em modo brake
             if brakeMode == false and rtlMode == false and movingState then
-                -- change to break mode
+                -- change to brake mode
                 vehicle:set_mode(17)
-                gcs:send_text(4, "BREAK! - Obstacle detected")
-                last_break_time = now
+                gcs:send_text(4, "BRAKE! - Obstacle detected")
+                last_brake_time = now
                 brakeMode = true
             end
             --timer para menssagem não floodar
@@ -60,7 +61,7 @@ function avoidance()
     else
         colisionTime = nil
     end
-    --verifica se o drone está em modo break e muda para RTL depois de 10s
+    --verifica se o drone está em modo brake e muda para RTL depois de 10s
     if brakeMode and now - last_brake_time >= brake_interval then
         --RTL
         vehicle:set_mode(6)
@@ -70,15 +71,31 @@ function avoidance()
     end
 end
 
+function debug()
+    gcs:send_text(7, "armingState: " .. tostring(armingState))
+    gcs:send_text(7, "droneMode: " .. tostring(droneMode))
+    gcs:send_text(7, "brakeMode: " .. tostring(brakeMode))
+    gcs:send_text(7, "rtlMode: " .. tostring(rtlMode))
+    gcs:send_text(7, "movingState: " .. tostring(movingState))
+    gcs:send_text(7, "distance: " .. tostring(distance))
+    gcs:send_text(7, "threshold: " .. tostring(threshold))
+    gcs:send_text(7, "colisionTime: " .. tostring(colisionTime))
+    gcs:send_text(7, "now: " .. tostring(now))
+    gcs:send_text(7, "last_msg_time: " .. tostring(last_msg_time))
+    gcs:send_text(7, "msg_interval: " .. tostring(msg_interval))
+    gcs:send_text(7, "last_brake_time: " .. tostring(last_brake_time))
+    gcs:send_text(7, "brake_interval: " .. tostring(brake_interval))
+end
+
 function update()
     now = millis()
     threshold = param:get("SCR_USER1") or 0
     distance = rangefinder:distance_cm_orient(0) -- 0 = Frente (Forward). Altere se for outra direção.
     armingState = arming:is_armed()
     droneMode = vehicle:get_mode()
-    --verifica se o drone ainda está em break
-    if breakMode and droneMode ~= 17 then
-        breakMode = false
+    --verifica se o drone ainda está em brake
+    if brakeMode and droneMode ~= 17 then
+        brakeMode = false
     end
     --verifica se o drone ainda está em RTL
     if rtlMode and droneMode ~= 6 then
@@ -99,6 +116,11 @@ function update()
             last_msg_time = now
         end
     end
+
+    if debugMode then
+        debug()
+    end
+
     --retorna a função principal
     return update, 250
 end
