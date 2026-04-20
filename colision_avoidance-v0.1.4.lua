@@ -1,15 +1,17 @@
---Colision Avoidance v0.1.3
+--Colision Avoidance v0.1.4
 -- set SCR_USER1 to the desired limit distance in cm
 
 --variáveis de leitura
 local distance
-local threshold           -- configure a distância de segurança em cm no parametro SCR_USER1
+local threshold = 6000         -- configure a distância de segurança em cm no parametro SCR_USER1
 local droneMode           --modo de voo do drone
 local armingState         -- drone armado
 local movingState = false --se o drone se move
 local brakeMode = false   --se o drone está em brake
 local rtlMode = false
 local debugMode = false
+local groundSpeed = 0 -- em m/s
+local speed_threshold = 11 -- velocidade para dobrar o threshold em m/s (configurar em SCR_USER2)
 
 --variáveis de tempo
 local colisionTime = nil
@@ -22,7 +24,7 @@ local brake_interval = 10000 --intervalo entre o Brake e RTL
 
 function avoidance()
     --verifica se está se movendo
-    if ahrs:groundspeed_vector():length() > 1 then
+    if groundSpeed > 1 then
         movingState = true
     else
         movingState = false
@@ -89,10 +91,16 @@ end
 
 function update()
     now = millis()
-    threshold = param:get("SCR_USER1") or 0
     distance = rangefinder:distance_cm_orient(0) -- 0 = Frente (Forward). Altere se for outra direção.
     armingState = arming:is_armed()
     droneMode = vehicle:get_mode()
+    groundSpeed = ahrs:groundspeed_vector():length()
+
+    if groundSpeed ~= nil and groundSpeed > speed_threshold then
+        threshold = threshold*2
+    else
+        threshold = param:get("SCR_USER1") or 6000
+    end
     --verifica se o drone ainda está em brake
     if brakeMode and droneMode ~= 17 then
         brakeMode = false
@@ -122,11 +130,14 @@ function update()
     end
 
     --retorna a função principal
-    return update, 250
+    return update, 500
 end
 
-gcs:send_text(6, "Collision Avoidance is running v0.1.3")
+gcs:send_text(6, "Collision Avoidance is running v0.1.4")
+threshold = param:get("SCR_USER1") or 6000 --em centimetros
+speed_threshold = param:get("SCR_USER2") or 11 --em m/s
 return update()
+
 --Nossa Senhora das 6 hélices, protetora dos drones,
 --que atravessam o cerrado as 6 horas da tarde,
 --Fazei com que eu chegue do outro lado,
