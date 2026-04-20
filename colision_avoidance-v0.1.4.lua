@@ -81,6 +81,7 @@ function debug()
     gcs:send_text(7, "movingState: " .. tostring(movingState))
     gcs:send_text(7, "distance: " .. tostring(distance))
     gcs:send_text(7, "threshold: " .. tostring(threshold))
+    gcs:send_text(7, "speed_threshold: " .. tostring(speed_threshold))
     gcs:send_text(7, "colisionTime: " .. tostring(colisionTime))
     gcs:send_text(7, "now: " .. tostring(now))
     gcs:send_text(7, "last_msg_time: " .. tostring(last_msg_time))
@@ -90,12 +91,14 @@ function debug()
 end
 
 function update()
+    --atualiza as variáveis
     now = millis()
     distance = rangefinder:distance_cm_orient(0) -- 0 = Frente (Forward). Altere se for outra direção.
     armingState = arming:is_armed()
     droneMode = vehicle:get_mode()
     groundSpeed = ahrs:groundspeed_vector():length()
 
+    -- verifica se o drone está se movendo rapido o suficiente para dobrar o threshold
     if groundSpeed ~= nil and groundSpeed > speed_threshold then
         threshold = threshold*2
     else
@@ -109,7 +112,7 @@ function update()
     if rtlMode and droneMode ~= 6 then
         rtlMode = false
     end
-    --verifica se há dados de lidar
+    --verifica se há dados de rangefinder
     if distance ~= nil then
         --verifica se o drone está armado
         if armingState then
@@ -124,7 +127,7 @@ function update()
             last_msg_time = now
         end
     end
-
+    -- manda o printão pra nós
     if debugMode then
         debug()
     end
